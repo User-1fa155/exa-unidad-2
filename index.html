@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Examen - Ética Unidad 2</title>
+    <style>
+        /* Estilos compatibles con Dreamweaver y navegadores modernos */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f3;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .quiz-container {
+            background-color: #fff;
+            max-width: 800px;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .progress {
+            text-align: right;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        .question-text {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .options {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .options li {
+            margin-bottom: 10px;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .options label:hover {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+        }
+        .options input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+        }
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            transition: background-color 0.3s;
+        }
+        .btn-submit:hover {
+            background-color: #2980b9;
+        }
+        .btn-submit:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+        }
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .result-screen {
+            display: none;
+            text-align: center;
+        }
+        .result-screen h2 {
+            color: #2c3e50;
+        }
+        .score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        .btn-restart {
+            padding: 10px 20px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .btn-restart:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-screen">
+        <h1>Examen de Preparación: Ética Unidad 2</h1>
+        <div class="progress" id="progress">Pregunta 1 de 50</div>
+        
+        <div class="question-text" id="question">Cargando pregunta...</div>
+        
+        <ul class="options" id="options">
+            <!-- Las opciones se inyectan vía JavaScript -->
+        </ul>
+        
+        <div id="feedback" class="feedback"></div>
+        
+        <button id="btn-next" class="btn-submit" disabled>Comprobar Respuesta</button>
+    </div>
+
+    <div id="result-screen" class="result-screen">
+        <h2>¡Examen Terminado!</h2>
+        <p>Tu calificación final es:</p>
+        <div class="score" id="score-display">0 / 50</div>
+        <p id="score-message"></p>
+        <button class="btn-restart" onclick="location.reload()">Volver a intentar</button>
+    </div>
+</div>
+
+<script>
+    // Banco de 50 preguntas basadas fielmente en el documento "TE U2.pdf"
+    const quizData = [
+        {
+            q: "1. Según el documento, ¿qué significa la ética personal?",
+            options: [
+                "a) Memorizar las leyes del país para no cometer delitos.",
+                "b) Reflexionar sobre nuestras creencias, hábitos y comportamientos para ver si respetan los derechos de todos.",
+                "c) Imponer nuestras reglas morales al resto de la sociedad.",
+                "d) Actuar únicamente en beneficio propio para alcanzar el éxito material."
+            ],
+            answer: 1
+        },
+        {
+            q: "2. ¿Cuál es el propósito principal de actuar de acuerdo a la ética personal?",
+            options: [
+                "a) Lograr reconocimiento académico.",
+                "b) Evitar el pago de impuestos.",
+                "c) Vivir en paz y ayudar a construir sociedades más justas y felices.",
+                "d) Modificar las leyes gubernamentales."
+            ],
+            answer: 2
+        },
+        {
+            q: "3. En el ámbito social, ¿qué debemos cuestionar según el texto?",
+            options: [
+                "a) Si los comportamientos heredados son buenos para todos y no discriminatorios.",
+                "b) Únicamente los comportamientos de los jóvenes.",
+                "c) Las reglas que benefician a las empresas extranjeras.",
+                "d) El nivel económico de nuestros vecinos."
+            ],
+            answer: 0
+        },
+        {
+            q: "4. Según el texto, ¿qué conductas son reprobadas en TODAS las sociedades?",
+            options: [
+                "a) Estudiar y trabajar.",
+                "b) Matar, robar y maltratar a los débiles.",
+                "c) Ser honesto y laborioso.",
+                "d) Las costumbres de los jóvenes."
+            ],
+            answer: 1
+        },
+        {
+            q: "5. ¿Cómo sabemos que las normas morales de una cultura NO son siempre las adecuadas?",
+            options: [
+                "a) Porque las reglas morales no deben en ningún momento afectar los derechos humanos.",
+                "b) Porque cambian dependiendo del partido político en el poder.",
+                "c) Porque los jóvenes siempre las desaprueban.",
+                "d) Porque dependen del nivel económico del país."
+            ],
+            answer: 0
+        },
+        {
+            q: "6. ¿Cuáles son algunos de los valores que todas las comunidades académicas deben asumir?",
+            options: [
+                "a) Competitividad, riqueza y ambición.",
+                "b) Integridad, honestidad, respeto y ecofilia.",
+                "c) Individualismo y secretismo.",
+                "d) Fe, resignación y obediencia ciega."
+            ],
+            answer: 1
+        },
+        {
+            q: "7. ¿Qué principio aplicable a los alumnos destaca en el ámbito académico?",
+            options: [
+                "a) Exigir calificaciones sin esfuerzo.",
+                "b) Integridad académica y cuidado de las instalaciones.",
+                "c) Imponer reglas a los docentes.",
+                "d) Evitar el uso de bibliotecas."
+            ],
+            answer: 1
+        },
+        {
+            q: "8. ¿Qué significa ser ciudadano o ciudadana?",
+            options: [
+                "a) Ser miembro de un partido político.",
+                "b) Pertenecer a la comunidad más rica del país.",
+                "c) Ser miembro pleno de una comunidad con los mismos derechos, oportunidades y obligaciones.",
+                "d) Vivir aislado de las decisiones democráticas."
+            ],
+            answer: 2
+        },
+        {
+            q: "9. Para que nuestros derechos (libertad, seguridad, justicia) sean respetados, ¿qué debemos hacer primero?",
+            options: [
+                "a) Cumplir con nuestras obligaciones ciudadanas y respetar los derechos de los demás.",
+                "b) Exigirlos mediante la violencia.",
+                "c) Esperar a que el gobierno los otorgue automáticamente.",
+                "d) Ignorar las leyes menores como tirar basura."
+            ],
+            answer: 0
+        },
+        {
+            q: "10. ¿Qué se entiende por 'comunidad' según el texto?",
+            options: [
+                "a) Personas que compiten en un mismo mercado laboral.",
+                "b) Grupos de personas que tienen en común el lugar donde viven, trabajo, religión, etc.",
+                "c) Exclusivamente la familia nuclear.",
+                "d) Solamente las personas nacidas en un mismo país."
+            ],
+            answer: 1
+        },
+        {
+            q: "11. Ante la diversidad en las comunidades, ¿qué es necesario establecer para vivir en armonía?",
+            options: [
+                "a) Castigos severos para quienes piensen distinto.",
+                "b) Reglas de convivencia que sean aceptables y útiles para todos.",
+                "c) Límites geográficos estrictos.",
+                "d) Un solo idioma obligatorio."
+            ],
+            answer: 1
+        },
+        {
+            q: "12. ¿Qué son los 'Actos morales'?",
+            options: [
+                "a) Actos instintivos e inconscientes.",
+                "b) Actos humanos voluntarios, libres y conscientes que pueden juzgarse.",
+                "c) Leyes promulgadas por el gobierno.",
+                "d) Costumbres de animales en sociedad."
+            ],
+            answer: 1
+        },
+        {
+            q: "13. ¿En qué consiste un 'Juicio moral'?",
+            options: [
+                "a) En aplicar la ley escrita en los tribunales.",
+                "b) En evaluar una acción de acuerdo a las concepciones, creencias y costumbres de nuestra sociedad.",
+                "c) En un análisis filosófico estricto sobre los derechos universales.",
+                "d) En la decisión de un juez penal."
+            ],
+            answer: 1
+        },
+        {
+            q: "14. ¿Cuáles son los elementos del juicio moral mencionados en el texto?",
+            options: [
+                "a) El actor, el espectador, la multa y la cárcel.",
+                "b) El acto, las circunstancias, los medios, la intención y las consecuencias.",
+                "c) La religión, la edad, el sexo y el estado civil.",
+                "d) El pensamiento, la palabra y la obra."
+            ],
+            answer: 1
+        },
+        {
+            q: "15. ¿Qué es el 'Juicio ético'?",
+            options: [
+                "a) Es igual al juicio moral, dependen de la cultura.",
+                "b) Una evaluación que analiza exhaustivamente el acto, cuestionando si las normas morales respetan los derechos humanos y la dignidad.",
+                "c) Un castigo impuesto por la sociedad a los criminales.",
+                "d) La aprobación general de una costumbre."
+            ],
+            answer: 1
+        },
+        {
+            q: "16. En el ejemplo del texto sobre las mujeres que no pueden estudiar en algunos países, la acción es considerada:",
+            options: [
+                "a) Correcta éticamente e incorrecta moralmente.",
+                "b) Correcta moralmente (según su cultura) pero incorrecta éticamente (viola derechos).",
+                "c) Correcta tanto moral como éticamente.",
+                "d) Totalmente irrelevante."
+            ],
+            answer: 1
+        },
+        {
+            q: "17. ¿Qué es la 'Axiología'?",
+            options: [
+                "a) El estudio del comportamiento animal.",
+                "b) La rama de la filosofía que estudia los valores y los juicios valorativos.",
+                "c) La ciencia que estudia el origen del universo.",
+                "d) El estudio de las leyes penales."
+            ],
+            answer: 1
+        },
+        {
+            q: "18. ¿De dónde proviene la palabra Axiología y qué significa?",
+            options: [
+                "a) Del latín axio: norma.",
+                "b) Del griego axios: digno, valioso.",
+                "c) Del griego axio: pensamiento.",
+                "d) Del latín axios: obligación."
+            ],
+            answer: 1
+        },
+        {
+            q: "19. ¿Qué afirma el Objetivismo de los valores (Teoría platónica)?",
+            options: [
+                "a) Los valores son creaciones históricas de la sociedad.",
+                "b) Los valores dependen del gusto de cada persona.",
+                "c) Los valores son entidades objetivas, inmutables, independientes del hombre, que sólo deben ser descubiertas.",
+                "d) Los valores no existen, son una ilusión."
+            ],
+            answer: 2
+        },
+        {
+            q: "20. ¿Qué afirma la Corriente subjetivista de los valores?",
+            options: [
+                "a) Los valores los dicta la naturaleza.",
+                "b) Los valores son creaciones histórico-culturales dadas por los seres humanos en función de sus necesidades y deseos.",
+                "c) Los valores son universales e inmutables.",
+                "d) El hombre debe descubrir los valores, no inventarlos."
+            ],
+            answer: 1
+        },
+        {
+            q: "21. ¿Qué filósofo apoya la teoría de que los valores son relativos histórica y culturalmente?",
+            options: [
+                "a) Max Scheler",
+                "b) Platón",
+                "c) Friedich Nietzche",
+                "d) Aristóteles"
+            ],
+            answer: 2
+        },
+        {
+            q: "22. Según la 'POSTURA EQUILIBRADA', ¿cuándo emerge el valor?",
+            options: [
+                "a) Solo cuando el individuo lo desea.",
+                "b) Cuando entran en relación el sujeto (que valora) y el objeto (que posee ciertas cualidades).",
+                "c) Cuando lo dicta una ley suprema.",
+                "d) Exclusivamente en las prácticas religiosas."
+            ],
+            answer: 1
+        },
+        {
+            q: "23. En la clasificación por alcance, ¿qué son los 'Valores universales'?",
+            options: [
+                "a) Valiosos sólo para una cultura en una época.",
+                "b) Los que mejoran el comportamiento individual.",
+                "c) Valiosos para todos en todos los lugares y épocas (ej. libertad, paz).",
+                "d) Los relacionados con la riqueza material."
+            ],
+            answer: 2
+        },
+        {
+            q: "24. En la jerarquía de Max Scheler, ¿cuáles son los valores del nivel más bajo?",
+            options: [
+                "a) Valores de lo sagrado.",
+                "b) Valores del sentimiento vital (salud, enfermedad).",
+                "c) Valores espirituales.",
+                "d) Valores de la sensibilidad o el placer (agradable/desagradable)."
+            ],
+            answer: 3
+        },
+        {
+            q: "25. En la clasificación de Hartman, la 'belleza, armonía y equilibrio' pertenecen a los valores:",
+            options: [
+                "a) Religiosos",
+                "b) Estéticos",
+                "c) Morales",
+                "d) Políticos"
+            ],
+            answer: 1
+        },
+        {
+            q: "26. Según Milton Rokeach, características como 'Honesto, Lógico, Responsable' son ejemplos de:",
+            options: [
+                "a) Valores últimos.",
+                "b) Valores económicos.",
+                "c) Valores instrumentales.",
+                "d) Virtudes dianoéticas."
+            ],
+            answer: 2
+        },
+        {
+            q: "27. Según Rokeach, 'Libertad, Felicidad, Un mundo en paz' son ejemplos de:",
+            options: [
+                "a) Valores instrumentales.",
+                "b) Valores vitales.",
+                "c) Valores estéticos.",
+                "d) Valores últimos."
+            ],
+            answer: 3
+        },
+        {
+            q: "28. ¿Cómo define el documento a las 'Virtudes'?",
+            options: [
+                "a) Leyes impuestas por el Estado.",
+                "b) Emociones pasajeras e incontrolables.",
+                "c) Rasgo de carácter manifestado en buenas acciones de forma habitual; excelencia.",
+                "d) El conocimiento puro sin aplicación práctica."
+            ],
+            answer: 2
+        },
+        {
+            q: "29. Para los filósofos griegos, ¿qué término significaba la excelencia o perfección en las personas o cosas?",
+            options: [
+                "a) Axios",
+                "b) Areté",
+                "c) Ethos",
+                "d) Dianoia"
+            ],
+            answer: 1
+        },
+        {
+            q: "30. Según Platón, ¿cuáles son las virtudes cardinales?",
+            options: [
+                "a) Fe, Esperanza y Caridad.",
+                "b) Prudencia, Sabiduría, Ciencia y Arte.",
+                "c) Prudencia, Fortaleza, Templanza y Justicia.",
+                "d) Alegría, Paz, Paciencia y Bondad."
+            ],
+            answer: 2
+        },
+        {
+            q: "31. ¿Qué filósofo propuso que la virtud es 'el justo medio entre dos excesos'?",
+            options: [
+                "a) Platón",
+                "b) Max Scheler",
+                "c) Aristóteles",
+                "d) Nietzsche"
+            ],
+            answer: 2
+        },
+        {
+            q: "32. Aristóteles divide las virtudes en dos tipos, ¿cuáles son?",
+            options: [
+                "a) Morales y Religiosas.",
+                "b) Éticas y Dianoéticas.",
+                "c) Públicas y Privadas.",
+                "d) Instrumentales y Últimas."
+            ],
+            answer: 1
+        },
+        {
+            q: "33. ¿Qué postulan los 'Estoicos' sobre la virtud?",
+            options: [
+                "a) Consiste en buscar el máximo placer posible.",
+                "b) Radica en la imperturbabilidad y enfrentar adecuadamente el dolor.",
+                "c) Es la rebelión contra el destino.",
+                "d) Solo se alcanza a través de la política."
+            ],
+            answer: 1
+        },
+        {
+            q: "34. ¿Qué añade la ética cristiana a las virtudes clásicas?",
+            options: [
+                "a) Prudencia y Justicia.",
+                "b) Tolerancia y Equidad.",
+                "c) Fe, Esperanza y Caridad (Teologales).",
+                "d) Concordia y Prosperidad."
+            ],
+            answer: 2
+        },
+        {
+            q: "35. ¿En qué fecha fue proclamada la Declaración Universal de los Derechos Humanos?",
+            options: [
+                "a) 10 de diciembre de 1948",
+                "b) 24 de octubre de 1945",
+                "c) 1 de enero de 2000",
+                "d) 16 de septiembre de 1810"
+            ],
+            answer: 0
+        },
+        {
+            q: "36. ¿Qué declara el Artículo 1 de la DUDH?",
+            options: [
+                "a) Todos tienen derecho al libre comercio.",
+                "b) Todos los seres humanos nacen libres e iguales en dignidad y derechos.",
+                "c) La educación debe ser privatizada.",
+                "d) Solo los ciudadanos de países desarrollados tienen derechos plenos."
+            ],
+            answer: 1
+        },
+        {
+            q: "37. Según el Artículo 2, los derechos proclamados se aplican:",
+            options: [
+                "a) Sólo a hombres mayores de edad.",
+                "b) A todos, sin distinción alguna de raza, color, sexo, idioma, religión u opinión.",
+                "c) Únicamente a personas que pagan impuestos.",
+                "d) A quienes nacen en territorios independientes exclusivamente."
+            ],
+            answer: 1
+        },
+        {
+            q: "38. ¿Qué prohíbe explícitamente el Artículo 4 de la DUDH?",
+            options: [
+                "a) La libertad de expresión.",
+                "b) La esclavitud y la servidumbre.",
+                "c) El derecho a la propiedad privada.",
+                "d) El libre tránsito."
+            ],
+            answer: 1
+        },
+        {
+            q: "39. Según el Artículo 5 de la DUDH, nadie será sometido a:",
+            options: [
+                "a) Exámenes académicos.",
+                "b) Pago de impuestos.",
+                "c) Torturas ni a penas o tratos crueles, inhumanos o degradantes.",
+                "d) Reglas de tránsito."
+            ],
+            answer: 2
+        },
+        {
+            q: "40. El Artículo 11, sobre delitos, garantiza el derecho a:",
+            options: [
+                "a) Que se presuma su inocencia mientras no se pruebe su culpabilidad.",
+                "b) Ser liberado inmediatamente sin juicio.",
+                "c) Escoger a su propio juez.",
+                "d) Un exilio forzado."
+            ],
+            answer: 0
+        },
+        {
+            q: "41. ¿De qué protege el Artículo 12 de la DUDH?",
+            options: [
+                "a) Del desempleo.",
+                "b) De injerencias arbitrarias en su vida privada, familia, domicilio o correspondencia.",
+                "c) De la falta de educación técnica.",
+                "d) De perder la nacionalidad."
+            ],
+            answer: 1
+        },
+        {
+            q: "42. ¿Qué derecho establece el Artículo 13?",
+            options: [
+                "a) A casarse a cualquier edad.",
+                "b) A circular libremente, elegir residencia y salir/regresar a su país.",
+                "c) A portar armas.",
+                "d) A no trabajar."
+            ],
+            answer: 1
+        },
+        {
+            q: "43. Según el Artículo 14, en caso de persecución, ¿a qué se tiene derecho?",
+            options: [
+                "a) A tomar la justicia por mano propia.",
+                "b) A buscar asilo, y a disfrutar de él, en cualquier país.",
+                "c) A evadir impuestos internacionales.",
+                "d) A ocultarse en embajadas permanentemente."
+            ],
+            answer: 1
+        },
+        {
+            q: "44. ¿Qué establece el Artículo 16 sobre el matrimonio?",
+            options: [
+                "a) Que sólo puede celebrarse por la iglesia.",
+                "b) Que los matrimonios arreglados desde niños son válidos.",
+                "c) Que sólo mediante libre y pleno consentimiento de los futuros esposos podrá contraerse.",
+                "d) Que no existe igualdad de derechos durante el matrimonio."
+            ],
+            answer: 2
+        },
+        {
+            q: "45. El derecho a la propiedad, individual y colectiva, está garantizado en el Artículo:",
+            options: [
+                "a) Artículo 17",
+                "b) Artículo 1",
+                "c) Artículo 30",
+                "d) Artículo 5"
+            ],
+            answer: 0
+        },
+        {
+            q: "46. El Artículo 18 garantiza el derecho a la libertad de pensamiento, de conciencia y de religión. ¿Qué más incluye?",
+            options: [
+                "a) La obligación de tener una religión.",
+                "b) La libertad de cambiar de religión y de manifestarla en público o privado.",
+                "c) La prohibición de enseñar la religión a los hijos.",
+                "d) La censura de creencias contrarias al Estado."
+            ],
+            answer: 1
+        },
+        {
+            q: "47. Según el Artículo 21, ¿cuál es la base de la autoridad del poder público?",
+            options: [
+                "a) La fuerza militar.",
+                "b) La herencia real.",
+                "c) La voluntad del pueblo, expresada mediante elecciones auténticas.",
+                "d) El poder económico."
+            ],
+            answer: 2
+        },
+        {
+            q: "48. Según el Artículo 23, además del derecho al trabajo, ¿a qué más se tiene derecho?",
+            options: [
+                "a) A no pagar impuestos sobre la nómina.",
+                "b) A igual salario por trabajo igual, y a fundar sindicatos.",
+                "c) A vacaciones indefinidas pagadas.",
+                "d) A un trabajo sin responsabilidades."
+            ],
+            answer: 1
+        },
+        {
+            q: "49. Sobre el derecho a la educación (Artículo 26), la instrucción elemental debe ser:",
+            options: [
+                "a) Exclusiva y costosa.",
+                "b) Obligatoria y gratuita.",
+                "c) Optativa según el país.",
+                "d) Únicamente técnica."
+            ],
+            answer: 1
+        },
+        {
+            q: "50. Finalmente, ¿qué indica el Artículo 29 sobre las personas?",
+            options: [
+                "a) Que toda persona tiene deberes respecto a la comunidad.",
+                "b) Que los derechos humanos están por encima de las leyes de tránsito solamente.",
+                "c) Que las libertades pueden usarse para destruir los propósitos de la ONU.",
+                "d) Que el Estado puede suprimir derechos si lo considera necesario."
+            ],
+            answer: 0
+        }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const progressEl = document.getElementById("progress");
+    const btnNext = document.getElementById("btn-next");
+    const feedbackEl = document.getElementById("feedback");
+    const quizScreen = document.getElementById("quiz-screen");
+    const resultScreen = document.getElementById("result-screen");
+    const scoreDisplay = document.getElementById("score-display");
+    const scoreMessage = document.getElementById("score-message");
+
+    function loadQuestion() {
+        answered = false;
+        btnNext.disabled = true;
+        btnNext.textContent = "Comprobar Respuesta";
+        feedbackEl.style.display = "none";
+        feedbackEl.className = "feedback";
+        
+        const qData = quizData[currentQuestion];
+        progressEl.textContent = `Pregunta ${currentQuestion + 1} de ${quizData.length}`;
+        questionEl.textContent = qData.q;
+        
+        optionsEl.innerHTML = "";
+        
+        qData.options.forEach((opt, index) => {
+            const li = document.createElement("li");
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = "option";
+            input.value = index;
+            
+            input.addEventListener("change", () => {
+                if(!answered) btnNext.disabled = false;
+            });
+            
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(opt));
+            li.appendChild(label);
+            optionsEl.appendChild(li);
+        });
+    }
+
+    btnNext.addEventListener("click", () => {
+        if (!answered) {
+            // Check Answer Phase
+            const selected = document.querySelector('input[name="option"]:checked');
+            if (selected) {
+                answered = true;
+                const answerValue = parseInt(selected.value);
+                const correctValue = quizData[currentQuestion].answer;
+                
+                // Disable all radios
+                const radios = document.querySelectorAll('input[name="option"]');
+                radios.forEach(r => r.disabled = true);
+                
+                if (answerValue === correctValue) {
+                    score++;
+                    feedbackEl.textContent = "¡Correcto!";
+                    feedbackEl.classList.add("correct");
+                } else {
+                    feedbackEl.innerHTML = `Incorrecto. La respuesta correcta era:<br><strong>${quizData[currentQuestion].options[correctValue]}</strong>`;
+                    feedbackEl.classList.add("incorrect");
+                }
+                
+                feedbackEl.style.display = "block";
+                
+                if (currentQuestion < quizData.length - 1) {
+                    btnNext.textContent = "Siguiente Pregunta";
+                } else {
+                    btnNext.textContent = "Ver Resultados Finales";
+                }
+            }
+        } else {
+            // Next Question Phase
+            currentQuestion++;
+            if (currentQuestion < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+    });
+
+    function showResults() {
+        quizScreen.style.display = "none";
+        resultScreen.style.display = "block";
+        scoreDisplay.textContent = `${score} / ${quizData.length}`;
+        
+        const percentage = (score / quizData.length) * 100;
+        let message = "";
+        
+        if (percentage >= 90) {
+            message = "¡Excelente trabajo! Tienes un dominio total de la unidad. El 100 está asegurado.";
+        } else if (percentage >= 70) {
+            message = "¡Muy bien! Estás preparado/a para alcanzar ese 70 o más en tu examen. Repasa un poco los errores y estarás perfecto/a.";
+        } else {
+            message = "Aún hay áreas de oportunidad. Te recomiendo volver a leer el documento y realizar el examen nuevamente para mejorar tu calificación.";
+        }
+        
+        scoreMessage.textContent = message;
+    }
+
+    // Inicializar el quiz
+    loadQuestion();
+</script>
+
+</body>
+</html>
